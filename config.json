@@ -1,0 +1,11 @@
+{
+  "mongodb": {
+    "uri": "mongodb://localhost:27017/"
+  },
+  "cors": {
+    "allow_origins": [
+      "http://localhost:3000",
+      "http://localhost:5173"
+    ]
+  }
+}

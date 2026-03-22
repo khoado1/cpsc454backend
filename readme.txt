@@ -1,14 +1,20 @@
 python3 -m venv myenv
 source myenv/bin/activate
 
-pip install fastapi uvicorn requests pydantic
+cp .env.local.example .env.local
 
+pip install fastapi uvicorn requests pydantic
+pip install PyJWT bcrypt pymongo python-multipart
 
 python3 create_user.py user1 password1
+python3 create_user.py user2 password2
+
+python3 create_user.py alice alicepassword
+python3 create_user.py bob bobpassword
+
 
 mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logpath "$(brew --prefix)/var/log/mongodb/mongo.log" --logappend
 
-export MONGODB_URI="mongodb://admin:password@localhost:27017/?authSource=admin"
 uvicorn server:app --reload --port 9001
 
 
@@ -16,6 +22,7 @@ python3 client.py \
   --base-url http://localhost:9001 \
   --username user1 \
   --password password1 \
+  --recipient-user-id <recipient_user_id> \
   --file ~/dev/c545_proj/test.webm \
   --content-type application/octet-stream
 
@@ -50,3 +57,6 @@ db.users.find().pretty()
 
 use app_data
 db.fs.files.find().pretty()
+
+--Swagger documentation
+http://localhost:9001/docs

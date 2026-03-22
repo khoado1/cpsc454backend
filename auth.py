@@ -12,13 +12,15 @@ JWT_EXPIRES_MINUTES = int(os.environ.get("JWT_EXPIRES_MINUTES", "60"))
 JWT_ALGORITHM = "HS256"
 
 
-def create_access_token(username: str) -> str:
+def create_access_token(user_id: str, username: str | None = None) -> str:
     now = datetime.now(timezone.utc)
     payload = {
-        "sub": username,
+        "sub": user_id,
         "iat": now,
         "exp": now + timedelta(minutes=JWT_EXPIRES_MINUTES),
     }
+    if username:
+        payload["username"] = username
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
@@ -33,11 +35,11 @@ def verify_access_token(token: str) -> dict:
     return payload
 
 
-def get_current_username(
+def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     payload = verify_access_token(credentials.credentials)
-    username = payload.get("sub")
-    if not username:
+    user_id = payload.get("sub")
+    if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token")
-    return username
+    return user_id

@@ -22,6 +22,11 @@ def parse_args() -> argparse.Namespace:
         help="Optional request id. Defaults to a generated UUID.",
     )
     parser.add_argument(
+        "--recipient-user-id",
+        required=True,
+        help="Recipient user id stored with the upload metadata.",
+    )
+    parser.add_argument(
         "--content-type",
         default="application/octet-stream",
         help="Content type to use when uploading sample bytes.",
@@ -60,7 +65,10 @@ def build_upload_payload(args: argparse.Namespace) -> tuple[dict, dict]:
         binary_payload = b"sample binary payload for upload testing"
         content_type = args.content_type
 
-    multipart_form = {"id": request_id}
+    multipart_form = {
+        "id": request_id,
+        "recipient_user_id": args.recipient_user_id,
+    }
     multipart_files = {
         "binary_data": (filename, binary_payload, content_type),
     }
