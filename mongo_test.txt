@@ -1,0 +1,23 @@
+
+
+mongosh
+
+use admin
+
+db.createUser({
+  user: "admin",
+  pwd: "password",
+  roles: [
+    { role: "userAdminAnyDatabase", db: "admin" },
+    { role: "readWriteAnyDatabase", db: "admin" }
+  ]
+})
+
+mongosh -u admin -p 'password' --authenticationDatabase admin
+
+
+--create user
+MONGODB_URI="mongodb://admin:password@localhost:27017/?authSource=admin" python3 create_user.py user1 password1
+
+MONGODB_URI="mongodb://admin:password@localhost:27017/?authSource=admin" uvicorn server:app --reload
+

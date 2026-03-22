@@ -1,0 +1,87 @@
+The server generated these startup warnings when booting
+   2026-03-21T14:06:15.310-07:00: Access control is not enabled for the database. Read and write access to data and configuration is unrestricted
+   2026-03-21T14:06:15.310-07:00: You are running this process as the root user, which is not recommended
+
+
+To fix these warnings:
+
+Enable access control (authentication):
+
+Stop MongoDB: brew services stop mongodb/brew/mongodb-community
+Start without auth: mongod --dbpath /usr/local/var/mongodb --fork --logpath /usr/local/var/log/mongodb/mongo.log
+Connect: mongosh
+Create admin user:
+
+use admin
+db.createUser({user: "admin", pwd: "password", roles: ["userAdminAnyDatabase", "readWriteAnyDatabase"]})
+
+Stop, then start with auth: mongod --auth --dbpath /usr/local/var/mongodb --fork --logpath /usr/local/var/log/mongodb/mongo.log
+Connect with auth: mongosh -u admin -p password
+Run as non-root user:
+
+Create a mongodb user: sudo dscl . -create /Users/mongodb
+Change ownership: sudo chown -R mongodb /usr/local/var/mongodb
+Run as that user: sudo -u mongodb mongod --auth --dbpath /usr/local/var/mongodb --logpath /usr/local/var/log/mongodb/mongo.log --fork
+For production, use MongoDB Atlas or configure properly. Update your connection string in code to include credentials. - Stop, then start with auth: mongod --auth --dbpath /usr/local/var/mongodb --fork --logpath /usr/local/var/log/mongodb/mongo.log
+
+Connect with auth: mongosh -u admin -p password
+Run as non-root user:
+Create a mongodb user: sudo dscl . -create /Users/mongodb
+Change ownership: sudo chown -R mongodb /usr/local/var/mongodb
+Run as that user: sudo -u mongodb mongod --auth --dbpath /usr/local/var/mongodb --logpath /usr/local/var/log/mongodb/mongo.log --fork
+For production, use MongoDB Atlas or configure properly. Update your connection string in code to include credentials.
+
+--error with mongod --dbpath /usr/local/var/mongodb --fork --logpath /usr/local/var/log/mongodb/mongo.log
+sudo mkdir -p /usr/local/var/mongodb /usr/local/var/log/mongodb
+sudo chown -R $(whoami) /usr/local/var/mongodb /usr/local/var/log/mongodb
+
+dscl . -list /Users
+
+--Create mongodb user
+sudo dscl . -create /Users/mongodb
+sudo dscl . -create /Users/mongodb UserShell /bin/bash
+sudo dscl . -create /Users/mongodb RealName "MongoDB User"
+sudo dscl . -create /Users/mongodb UniqueID 1001  # Use an unused ID, check with `id`
+sudo dscl . -create /Users/mongodb PrimaryGroupID 20
+sudo dscl . -create /Users/mongodb NFSHomeDirectory /var/empty
+
+Edit the launchd plist:
+# Find the plist
+ls ~/Library/LaunchAgents/ | grep mongodb
+
+# Edit it (replace with actual filename)
+nano ~/Library/LaunchAgents/homebrew.mxcl.mongodb-community.plist
+
+Add the UserName key inside the <dict> (top-level <dict>):
+<key>UserName</key>
+<string>mongodb</string>
+
+
+brew --prefix mongodb-community
+
+Reload service:
+brew services stop mongodb/brew/mongodb-community
+brew services start mongodb/brew/mongodb-community
+
+history
+
+~/Library/LaunchAgents/homebrew.mxcl.mongodb-community.plist
+/usr/local/opt/mongodb-community/homebrew.mxcl.mongodb-community.plist
+/usr/local/opt/mongodb-community/hmacos_mongodb.plist
+
+sudo chown -R "$USER" ~/Library/LaunchAgents
+
+--troubleshoot service error
+--List Homebrew services:
+brew services list
+
+--check if mogod is running
+ps aux | grep mongod
+
+--check log
+tail -n 50 /usr/local/var/log/mongodb/mongo.log
+
+
+rm /usr/local/var/log/mongodb/mongo.log
+
+sudo chown -R mongodb /usr/local/var/mongodb

@@ -1,28 +1,98 @@
+import argparse
+import os
+import uuid
+
 import requests
 
 
-# Login call
-login_data = {"username": "admin", "password": "password"}
-response = requests.post("http://localhost:8000/login", json=login_data)
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Login and upload binary data to /process")
+    parser.add_argument("--base-url", default="http://localhost:8000", help="API base URL")
+    parser.add_argument("--username", default="user1", help="Login username")
+    parser.add_argument("--password", default="password1", help="Login password")
+    parser.add_argument(
+        "--file",
+        dest="file_path",
+        default=None,
+        help="Optional path to a file to upload. If omitted, sends sample bytes.",
+    )
+    parser.add_argument(
+        "--request-id",
+        default=None,
+        help="Optional request id. Defaults to a generated UUID.",
+    )
+    parser.add_argument(
+        "--content-type",
+        default="application/octet-stream",
+        help="Content type to use when uploading sample bytes.",
+    )
+    return parser.parse_args()
 
-data = response.json()
-if "token" in data:
-    token = data["token"]
-    print(f"Logged in with token: {token}")
-else:
-    print(f"Login failed: {data.get('message', 'Unknown error')}")
+
+def login(base_url: str, username: str, password: str) -> str:
+    login_data = {"username": username, "password": password}
+    response = requests.post(f"{base_url}/login", json=login_data)
+
+    if response.status_code != 200:
+        print(f"Login failed ({response.status_code}): {response.text}")
+        raise SystemExit(1)
+
+    data = response.json()
+    token = data.get("access_token")
+    if not token:
+        print(f"Login response missing access_token: {data}")
+        raise SystemExit(1)
+
+    print("Login successful.")
+    return token
 
 
+def build_upload_payload(args: argparse.Namespace) -> tuple[dict, dict]:
+    request_id = args.request_id or str(uuid.uuid4())
 
-# Sample data
-id_str = "example_id"
-byte_array = b"some binary data here"
+    if args.file_path:
+        filename = os.path.basename(args.file_path)
+        with open(args.file_path, "rb") as input_file:
+            binary_payload = input_file.read()
+        content_type = args.content_type
+    else:
+        filename = "sample.bin"
+        binary_payload = b"sample binary payload for upload testing"
+        content_type = args.content_type
 
-response = requests.post("http://localhost:8000/process", json={"id": id_str, "data": byte_array.decode('latin-1')}, headers={"Authorization": f"Bearer {token}"})
-print(response.json())
+    multipart_form = {"id": request_id}
+    multipart_files = {
+        "binary_data": (filename, binary_payload, content_type),
+    }
+    return multipart_form, multipart_files
 
-data = response.json()
-if data.get("status") == "success":
-    print(f"Processed ID: {data['id']}, Data length: {data['data_length']}")
-else:
-    print("Process failed")
+
+def main() -> None:
+    args = parse_args()
+    token = login(args.base_url, args.username, args.password)
+    multipart_form, multipart_files = build_upload_payload(args)
+
+    response = requests.post(
+        f"{args.base_url}/process",
+        data=multipart_form,
+        files=multipart_files,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    if response.status_code != 200:
+        print(f"Upload failed ({response.status_code}): {response.text}")
+        raise SystemExit(1)
+
+    data = response.json()
+    print(data)
+
+    if data.get("status") == "success":
+        print(
+            f"Processed ID: {data['id']}, Data length: {data['data_length']}, Upload ID: {data['upload_id']}"
+        )
+    else:
+        print("Process failed")
+
+
+if __name__ == "__main__":
+    main()

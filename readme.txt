@@ -3,5 +3,50 @@ source myenv/bin/activate
 
 pip install fastapi uvicorn requests pydantic
 
-uvicorn server:app --reload
 
+python3 create_user.py user1 password1
+
+mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logpath "$(brew --prefix)/var/log/mongodb/mongo.log" --logappend
+
+export MONGODB_URI="mongodb://admin:password@localhost:27017/?authSource=admin"
+uvicorn server:app --reload --port 9001
+
+
+python3 client.py \
+  --base-url http://localhost:9001 \
+  --username user1 \
+  --password password1 \
+  --file ~/dev/c545_proj/test.webm \
+  --content-type application/octet-stream
+
+
+--install mongodb driver for python projects
+pip install pymongo
+
+
+--install mongodb
+brew tap mongodb/brew
+brew install mongodb-community
+
+--run mongodb
+brew services start mongodb/brew/mongodb-community
+--if needed run at elevated permissions
+sudo brew services start mongodb/brew/mongodb-community
+
+--verify
+mongosh
+
+MongoDB will run on localhost:27017
+
+
+mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logpath "$(brew --prefix)/var/log/mongodb/mongo.log" --logappend
+
+
+--password: password
+mongosh -u admin -p --authenticationDatabase admin
+
+use app_data
+db.users.find().pretty()
+
+use app_data
+db.fs.files.find().pretty()
