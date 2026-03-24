@@ -3,8 +3,7 @@ source myenv/bin/activate
 
 cp .env.local.example .env.local
 
-pip install fastapi uvicorn requests pydantic
-pip install PyJWT bcrypt pymongo python-multipart
+pip install -r requirements.txt
 
 python3 create_user.py user1 password1
 python3 create_user.py user2 password2
