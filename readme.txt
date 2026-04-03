@@ -18,6 +18,10 @@ mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logp
 uvicorn server:app --reload --port 9001
 
 
+--binary upload endpoint
+POST /binary-files
+
+
 python3 client.py \
   --base-url http://localhost:9001 \
   --username user1 \

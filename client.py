@@ -6,7 +6,7 @@ import requests
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Login and upload binary data to /process")
+    parser = argparse.ArgumentParser(description="Login and upload binary data to /binary-files")
     parser.add_argument("--base-url", default="http://localhost:8000", help="API base URL")
     parser.add_argument("--username", default="user1", help="Login username")
     parser.add_argument("--password", default="password1", help="Login password")
@@ -81,7 +81,7 @@ def main() -> None:
     multipart_form, multipart_files = build_upload_payload(args)
 
     response = requests.post(
-        f"{args.base_url}/process",
+        f"{args.base_url}/binary-files",
         data=multipart_form,
         files=multipart_files,
         headers={"Authorization": f"Bearer {token}"},

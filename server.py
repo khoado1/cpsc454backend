@@ -94,7 +94,7 @@ async def login(request: LoginRequest):
         "expires_in": JWT_EXPIRES_MINUTES * 60,
     }
 
-@app.post("/process")
+@app.post("/binary-files")
 async def store_binary_data(
     id: str = Form(...),
     recipient_user_id: str = Form(...),
