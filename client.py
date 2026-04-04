@@ -6,7 +6,7 @@ import requests
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Login and upload binary data to /process")
+    parser = argparse.ArgumentParser(description="Login and upload binary data to /messages endpoint")
     parser.add_argument("--base-url", default="http://localhost:8000", help="API base URL")
     parser.add_argument("--username", default="user1", help="Login username")
     parser.add_argument("--password", default="password1", help="Login password")
@@ -22,9 +22,9 @@ def parse_args() -> argparse.Namespace:
         help="Optional request id. Defaults to a generated UUID.",
     )
     parser.add_argument(
-        "--recipient-user-id",
+        "--receiver-user-id",
         required=True,
-        help="Recipient user id stored with the upload metadata.",
+        help="Receiver user id stored with the upload metadata.",
     )
     parser.add_argument(
         "--content-type",
@@ -66,8 +66,8 @@ def build_upload_payload(args: argparse.Namespace) -> tuple[dict, dict]:
         content_type = args.content_type
 
     multipart_form = {
-        "id": request_id,
-        "recipient_user_id": args.recipient_user_id,
+        "request_id": request_id,
+        "receiver_user_id": args.receiver_user_id,
     }
     multipart_files = {
         "binary_data": (filename, binary_payload, content_type),
@@ -81,7 +81,7 @@ def main() -> None:
     multipart_form, multipart_files = build_upload_payload(args)
 
     response = requests.post(
-        f"{args.base_url}/process",
+        f"{args.base_url}/messages",
         data=multipart_form,
         files=multipart_files,
         headers={"Authorization": f"Bearer {token}"},

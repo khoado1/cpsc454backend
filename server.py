@@ -10,6 +10,7 @@ from db import (
     fetch_binary_upload,
     fetch_user_key_material,
     list_binary_uploads,
+    list_users,
     mark_binary_upload_as_read,
     store_binary_upload,
     store_user_key_material,
@@ -45,6 +46,8 @@ class BinaryFileInfo(BaseModel):
     created_at: str | None
     upload_date: str | None
 
+class MarkReadRequest(BaseModel):
+    is_read: bool
 
 class MarkBinaryFileReadResponse(BaseModel):
     status: str
@@ -94,18 +97,18 @@ async def login(request: LoginRequest):
         "expires_in": JWT_EXPIRES_MINUTES * 60,
     }
 
-@app.post("/process")
+@app.post("/messages")
 async def store_binary_data(
-    id: str = Form(...),
-    recipient_user_id: str = Form(...),
+    receiver_user_id: str = Form(...),
+    request_id: str = Form(...),
     binary_data: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),
 ):
     binary_data_bytes = await binary_data.read()
     inserted_id = store_binary_upload(
-        owner_user_id=current_user_id,
-        recipient_user_id=recipient_user_id,
-        request_id=id,
+        sender_user_id=current_user_id,
+        receiver_user_id=receiver_user_id,
+        request_id=request_id,
         payload_bytes=binary_data_bytes,
         filename=binary_data.filename,
         content_type=binary_data.content_type,
@@ -113,22 +116,22 @@ async def store_binary_data(
 
     print(
         "Received request id %s with binary data bytes=%s for user=%s"
-        % (id, len(binary_data_bytes), current_user_id)
+        % (request_id, len(binary_data_bytes), current_user_id)
     )
     return {
         "status": "success",
-        "id": id,
-        "recipient_user_id": recipient_user_id,
+        "request_id": request_id,
+        "receiver_user_id": receiver_user_id,
         "is_read": 0,
         "data_length": len(binary_data_bytes),
         "content_type": binary_data.content_type,
         "filename": binary_data.filename,
         "upload_id": inserted_id,
-        "user_id": current_user_id,
+        "sender_user_id": current_user_id,
     }
 
 
-@app.post("/user/key-material")
+@app.post("/users/me/key-material")
 async def store_user_key_material_endpoint(
     request: StoreUserKeyMaterialRequest,
     current_user_id: str = Depends(get_current_user_id),
@@ -146,35 +149,35 @@ async def store_user_key_material_endpoint(
     return {"status": "success", "user_id": current_user_id}
 
 
-@app.get("/binary-files", response_model=list[BinaryFileInfo])
+@app.get("/messages", response_model=list[BinaryFileInfo])
 async def list_binary_file_infos(
-    owner_user_id: str | None = Query(default=None),
-    recipient_user_id: str | None = Query(default=None),
+    sender_user_id: str | None = Query(default=None),
+    receiver_user_id: str | None = Query(default=None),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    if owner_user_id is None and recipient_user_id is None:
+    if sender_user_id is None and receiver_user_id is None:
         uploads = list_binary_uploads()
         return [
             upload
             for upload in uploads
-            if current_user_id in {upload.get("owner_user_id"), upload.get("recipient_user_id")}
+            if current_user_id in {upload.get("owner_user_id"), upload.get("receiver_user_id")}
         ]
 
-    if current_user_id not in {owner_user_id, recipient_user_id}:
+    if current_user_id not in {sender_user_id, receiver_user_id}:
         raise HTTPException(status_code=403, detail="Not authorized to view these uploads")
 
     return list_binary_uploads(
-        owner_user_id=owner_user_id,
-        recipient_user_id=recipient_user_id,
+        sender_user_id=sender_user_id,
+        receiver_user_id=receiver_user_id,
     )
 
 
-@app.get("/binary-files/{upload_id}/data")
+@app.get("/messages/{message_id}")
 async def fetch_binary_file_data(
-    upload_id: str,
+    message_id: str,
     current_user_id: str = Depends(get_current_user_id),
 ):
-    upload = fetch_binary_upload(upload_id, current_user_id)
+    upload = fetch_binary_upload(message_id, current_user_id)
     if upload is None:
         raise HTTPException(status_code=404, detail="Binary upload not found")
 
@@ -192,12 +195,13 @@ async def fetch_binary_file_data(
     )
 
 
-@app.patch("/binary-files/{upload_id}/read", response_model=MarkBinaryFileReadResponse)
+@app.patch("/messages/{message_id}", response_model=MarkBinaryFileReadResponse)
 async def mark_binary_file_read(
-    upload_id: str,
+    file_id: str,
+    request: MarkReadRequest,
     current_user_id: str = Depends(get_current_user_id),
 ):
-    result = mark_binary_upload_as_read(upload_id, current_user_id)
+    result = mark_binary_upload_as_read(file_id, current_user_id, int(request.is_read))
     if result["status"] == "not_found":
         raise HTTPException(status_code=404, detail="Binary upload not found")
     if result["status"] == "forbidden":
@@ -206,7 +210,7 @@ async def mark_binary_file_read(
     return result
 
 
-@app.get("/user/key-material")
+@app.get("/users/me/key-material")
 async def fetch_user_key_material_endpoint(
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -215,3 +219,11 @@ async def fetch_user_key_material_endpoint(
         raise HTTPException(status_code=404, detail="Key material not found")
 
     return key_material
+
+@app.get("/users")
+async def list_users_endpoint():
+    users = list_users()
+    return sorted(
+        users,
+        key=lambda i: i.get("username", "").lower() if i.get("username") else ""
+    )

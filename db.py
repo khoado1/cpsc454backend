@@ -53,8 +53,8 @@ def verify_user_password(username: str, password: str) -> bool:
 
 
 def store_binary_upload(
-    owner_user_id: str,
-    recipient_user_id: str,
+    sender_user_id: str,
+    receiver_user_id: str,
     request_id: str,
     payload_bytes: bytes,
     filename: str | None,
@@ -65,8 +65,8 @@ def store_binary_upload(
         filename=filename or "upload",
         content_type=content_type,
         metadata={
-            "owner_user_id": owner_user_id,
-            "recipient_user_id": recipient_user_id,
+            "sender_user_id": sender_user_id,
+            "receiver_user_id": receiver_user_id,
             "is_read": 0,
             "request_id": request_id,
             "created_at": datetime.now(timezone.utc),
@@ -76,14 +76,14 @@ def store_binary_upload(
 
 
 def list_binary_uploads(
-    owner_user_id: str | None = None,
+    sender_user_id: str | None = None,
     recipient_user_id: str | None = None,
 ) -> list[dict]:
     metadata_filters = []
-    if owner_user_id:
-        metadata_filters.append({"metadata.owner_user_id": owner_user_id})
+    if sender_user_id:
+        metadata_filters.append({"metadata.sender_user_id": sender_user_id})
     if recipient_user_id:
-        metadata_filters.append({"metadata.recipient_user_id": recipient_user_id})
+        metadata_filters.append({"metadata.receiver_user_id": recipient_user_id})
 
     query: dict = {}
     if metadata_filters:
@@ -96,10 +96,10 @@ def list_binary_uploads(
         upload_date = file_doc.get("uploadDate")
         uploads.append(
             {
-                "upload_id": str(file_doc.get("_id")),
+                "file_id": str(file_doc.get("_id")),
                 "request_id": metadata.get("request_id"),
-                "owner_user_id": metadata.get("owner_user_id"),
-                "recipient_user_id": metadata.get("recipient_user_id"),
+                "sender_user_id": metadata.get("sender_user_id"),
+                "receiver_user_id": metadata.get("receiver_user_id"),
                 "is_read": int(metadata.get("is_read", 0)),
                 "filename": file_doc.get("filename"),
                 "content_type": file_doc.get("contentType"),
@@ -112,9 +112,9 @@ def list_binary_uploads(
     return uploads
 
 
-def fetch_binary_upload(upload_id: str, current_user_id: str) -> dict | None:
+def fetch_binary_upload(file_id: str, current_user_id: str) -> dict | None:
     try:
-        object_id = ObjectId(upload_id)
+        object_id = ObjectId(file_id)
     except (InvalidId, TypeError):
         return None
 
@@ -147,9 +147,9 @@ def fetch_binary_upload(upload_id: str, current_user_id: str) -> dict | None:
     }
 
 
-def mark_binary_upload_as_read(upload_id: str, current_user_id: str) -> dict:
+def mark_binary_upload_as_read(file_id: str, current_user_id: str, is_read: int) -> dict:
     try:
-        object_id = ObjectId(upload_id)
+        object_id = ObjectId(file_id)
     except (InvalidId, TypeError):
         return {"status": "not_found"}
 
@@ -162,26 +162,20 @@ def mark_binary_upload_as_read(upload_id: str, current_user_id: str) -> dict:
     if current_user_id != recipient_user_id:
         return {"status": "forbidden"}
 
-    is_read = int(metadata.get("is_read", 0))
-    if is_read == 1:
-        read_at = metadata.get("read_at")
-        return {
-            "status": "already_read",
-            "upload_id": upload_id,
-            "is_read": 1,
-            "read_at": read_at.isoformat() if isinstance(read_at, datetime) else None,
-        }
-
-    read_at = datetime.now(timezone.utc)
-    fs_files.update_one(
-        {"_id": object_id},
-        {"$set": {"metadata.is_read": 1, "metadata.read_at": read_at}},
-    )
+    if is_read:
+        read_at = datetime.now(timezone.utc)
+        update_fields = {"$set": {"metadata.is_read": is_read, "metadata.read_at": read_at}}
+    else:
+        read_at = None
+        update_fields = {"$set": {"metadata.is_read": is_read}, "$unset": {"metadata.read_at": read_at}}
+    
+    fs_files.update_one({"_id": object_id}, update_fields)
+    
     return {
         "status": "updated",
-        "upload_id": upload_id,
-        "is_read": 1,
-        "read_at": read_at.isoformat(),
+        "file_id": str(object_id),
+        "is_read": is_read,
+        "read_at": read_at.isoformat() if read_at else None,
     }
 
 
@@ -243,3 +237,14 @@ def fetch_user_key_material(user_id: str) -> dict | None:
         result["updatedAt"] = updated_at.isoformat()
 
     return result
+
+def list_users() -> list[dict]:
+    userList = []
+    for user in users.find():
+        userList.append(
+            {
+                "user_id": str(user["_id"]),
+                "username": user["username"],
+                "publicKeyBase64": user.get("key_material", {}).get("publicKeyBase64"),
+            }
+        )
