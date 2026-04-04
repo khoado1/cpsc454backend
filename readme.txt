@@ -1,6 +1,9 @@
 python3 -m venv myenv
 source myenv/bin/activate
 
+git config --global user.name "khoado1"
+git config --global user.email "khoa_do@yahoo.com" 
+
 cp .env.local.example .env.local
 
 pip install fastapi uvicorn requests pydantic
