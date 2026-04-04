@@ -3,7 +3,11 @@ source myenv/bin/activate
 
 cp .env.local.example .env.local
 
-pip install fastapi uvicorn requests pydantic
+git config --global user.name "khoado1"
+git config --global user.email "khoa_do@yahoo.com" 
+
+
+pip install fastapi uvicorn requests pydantic bson
 pip install PyJWT bcrypt pymongo python-multipart
 
 python3 create_user.py user1 password1
