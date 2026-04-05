@@ -71,3 +71,16 @@ db.fs.files.find().pretty()
 
 --Swagger documentation
 http://localhost:9001/docs
+
+CORS Issue
+Yes. CORS_ALLOW_ORIGINS is read from the environment, not as a Python constant.
+
+Add a URL in either of these ways:
+
+Option 1: .env.local
+Create or edit:
+CORS_ALLOW_ORIGINS=http://localhost:3000,http://localhost:5173,http://your-new-url:8080
+JWT_EXPIRES_MINUTES=60
+JWT_SECRET_KEY=supersecretkey
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=cpsc454
