@@ -220,6 +220,7 @@ async def fetch_user_key_material_endpoint(
 
     return key_material
 
+# These are my changes
 @app.get("/users")
 async def list_users_endpoint():
     users = list_users()

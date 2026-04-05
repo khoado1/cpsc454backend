@@ -238,6 +238,7 @@ def fetch_user_key_material(user_id: str) -> dict | None:
 
     return result
 
+# These are my changes
 def list_users() -> list[dict]:
     userList = []
     for user in users.find():
