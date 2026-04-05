@@ -19,7 +19,7 @@ users = db[USERS_COLLECTION_NAME]
 fs = gridfs.GridFS(db)
 fs_files = db["fs.files"]
 
-
+# For testing purposes, we can connect to the database with credentials if needed
 def authenticate_user(username: str, password: str) -> dict | None:
     user = users.find_one({"username": username})
     if user is None:

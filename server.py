@@ -97,6 +97,7 @@ async def login(request: LoginRequest):
         "expires_in": JWT_EXPIRES_MINUTES * 60,
     }
 
+# This endpoint allows an authenticated user to upload binary data (e.g., a file) and associate it with a specific receiver and request ID. The uploaded data is stored in the database, and metadata about the upload is returned in the response.
 @app.post("/messages")
 async def store_binary_data(
     receiver_user_id: str = Form(...),
