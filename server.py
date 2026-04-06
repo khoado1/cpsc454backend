@@ -140,13 +140,16 @@ async def store_binary_data(
     data: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),
 ):
+    #    filename=data.filename,
+    #    content_type=data.content_type,
+
     data = await data.read()
     file_id = store_binary_upload(
         data=data,
         sender_user_id=current_user_id,
         receiver_user_id=receiver_user_id,
-        filename=data.filename,
-        content_type=data.content_type,
+        filename="upload.bin",
+        content_type="application/octet-stream",
         request_id=request_id,
     )
 
@@ -159,9 +162,9 @@ async def store_binary_data(
         "sender_user_id": current_user_id,
         "receiver_user_id": receiver_user_id,
         "is_read": 0,
-        "filename": data.filename,
+        "filename": "upload.bin",
         "data_length": len(data),
-        "content_type": data.content_type,
+        "content_type": "application/octet-stream",
         "request_id": request_id,
         "status": "success",
     }
