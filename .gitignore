@@ -1,4 +1,6 @@
 .env.local
 .venv/
 __pycache__/
-myenv
+*.pyc
+*.pyo
+__pycache__

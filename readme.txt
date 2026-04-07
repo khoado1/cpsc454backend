@@ -62,12 +62,16 @@ mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logp
 
 --password: password
 mongosh -u admin -p --authenticationDatabase admin
+password: password
 
 use app_data
 db.users.find().pretty()
 
 use app_data
 db.fs.files.find().pretty()
+
+db.users.deleteMany({})
+db.fs.files.deleteMany({})
 
 --Swagger documentation
 http://localhost:9001/docs
