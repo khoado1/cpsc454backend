@@ -41,8 +41,7 @@ python3 client.py \
   --content-type application/octet-stream
 
 
---install mongodb driver for python projects
-pip install pymongo
+pip install -r requirements.txt
 
 
 --install mongodb
