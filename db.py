@@ -61,6 +61,7 @@ def store_binary_upload(
     algorithm_for_data: str | None = None,
     encrypted_symmetric_key_base64: str | None = None,
     algorithm_for_symmetric_key: str | None = None,
+    decrypted_content_type: str | None = None,
 ) -> str:
     object_id = fs.put(
         data,
@@ -76,6 +77,7 @@ def store_binary_upload(
             "algorithm_for_data": algorithm_for_data,
             "encrypted_symmetric_key_base64": encrypted_symmetric_key_base64,
             "algorithm_for_symmetric_key": algorithm_for_symmetric_key,
+            "decrypted_content_type": decrypted_content_type,
         },
     )
     return str(object_id)
@@ -157,6 +159,7 @@ def fetch_binary_upload(user_id: str, file_id: str) -> dict | None:
         "algorithm_for_data": metadata.get("algorithm_for_data"),
         "encrypted_symmetric_key_base64": metadata.get("encrypted_symmetric_key_base64"),
         "algorithm_for_symmetric_key": metadata.get("algorithm_for_symmetric_key"),
+        "decrypted_content_type": metadata.get("decrypted_content_type"),
     }
 
 def mark_binary_upload_as_read(file_id: str, user_id: str, is_read: int) -> dict:

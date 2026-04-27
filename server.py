@@ -65,6 +65,17 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=[
+        "X-Request-Id",
+        "X-Sender-User-Id",
+        "X-Receiver-User-Id",
+        "X-Is-Read",
+        "X-Iv-For-Data-Base64",
+        "X-Algorithm-For-Data",
+        "X-Encrypted-Symmetric-Key-Base64",
+        "X-Algorithm-For-Symmetric-Key",
+        "X-Decrypted-Content-Type",
+    ],
 )
 
 @app.post("/register")
@@ -141,6 +152,7 @@ async def store_binary_data(
     algorithm_for_data: str = Form(...),
     encrypted_symmetric_key_base64: str = Form(...),
     algorithm_for_symmetric_key: str = Form(...),
+    decrypted_content_type: str = Form(...),
     data: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),
 ):
@@ -159,6 +171,7 @@ async def store_binary_data(
         algorithm_for_data=algorithm_for_data,
         encrypted_symmetric_key_base64=encrypted_symmetric_key_base64,
         algorithm_for_symmetric_key=algorithm_for_symmetric_key,
+        decrypted_content_type=decrypted_content_type,
     )
 
     print(
@@ -206,6 +219,7 @@ async def fetch_binary_file_data(
             "X-Algorithm-For-Data": str(message.get("algorithm_for_data") or ""),
             "X-Encrypted-Symmetric-Key-Base64": str(message.get("encrypted_symmetric_key_base64") or ""),
             "X-Algorithm-For-Symmetric-Key": str(message.get("algorithm_for_symmetric_key") or ""),
+            "X-Decrypted-Content-Type": str(message.get("decrypted_content_type") or ""),
         },
     )
 
