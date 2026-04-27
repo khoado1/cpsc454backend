@@ -137,25 +137,33 @@ async def fetch_user_key_material_endpoint(
 async def store_binary_data(
     request_id: str = Form(...),
     receiver_user_id: str = Form(...),
+    iv_for_data_base64: str = Form(...),
+    algorithm_for_data: str = Form(...),
+    encrypted_symmetric_key_base64: str = Form(...),
+    algorithm_for_symmetric_key: str = Form(...),
     data: UploadFile = File(...),
     current_user_id: str = Depends(get_current_user_id),
 ):
     #    filename=data.filename,
     #    content_type=data.content_type,
 
-    data = await data.read()
+    file_bytes = await data.read()
     file_id = store_binary_upload(
-        data=data,
+        data=file_bytes,
         sender_user_id=current_user_id,
         receiver_user_id=receiver_user_id,
         filename="upload.bin",
         content_type="application/octet-stream",
         request_id=request_id,
+        iv_for_data_base64=iv_for_data_base64,
+        algorithm_for_data=algorithm_for_data,
+        encrypted_symmetric_key_base64=encrypted_symmetric_key_base64,
+        algorithm_for_symmetric_key=algorithm_for_symmetric_key,
     )
 
     print(
         "Received request id %s with binary data bytes=%s for user=%s"
-        % (request_id, len(data), current_user_id)
+        % (request_id, len(file_bytes), current_user_id)
     )
     return {
         "file_id": file_id,
@@ -163,7 +171,7 @@ async def store_binary_data(
         "receiver_user_id": receiver_user_id,
         "is_read": 0,
         "filename": "upload.bin",
-        "data_length": len(data),
+        "data_length": len(file_bytes),
         "content_type": "application/octet-stream",
         "request_id": request_id,
         "status": "success",
@@ -194,6 +202,10 @@ async def fetch_binary_file_data(
             "X-Sender-User-Id": str(message.get("sender_user_id") or ""),
             "X-Receiver-User-Id": str(message.get("receiver_user_id") or ""),
             "X-Is-Read": str(message.get("is_read", 0)),
+            "X-Iv-For-Data-Base64": str(message.get("iv_for_data_base64") or ""),
+            "X-Algorithm-For-Data": str(message.get("algorithm_for_data") or ""),
+            "X-Encrypted-Symmetric-Key-Base64": str(message.get("encrypted_symmetric_key_base64") or ""),
+            "X-Algorithm-For-Symmetric-Key": str(message.get("algorithm_for_symmetric_key") or ""),
         },
     )
 

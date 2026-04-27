@@ -7,6 +7,7 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 
 from config import get_mongodb_uri, get_mongodb_with_cred_uri
+from gridfs.errors import NoFile
 
 MONGODB_URI = get_mongodb_uri()
 MONGODB_WITH_CRED_URI = get_mongodb_with_cred_uri()
@@ -37,7 +38,6 @@ def authenticate_user(username: str, password: str) -> dict | None:
 
     return user
 
-
 def create_user(username: str, password: str) -> dict | None:
     if users.find_one({"username": username}):
         return None
@@ -47,10 +47,8 @@ def create_user(username: str, password: str) -> dict | None:
 
     return users.find_one({"_id": result.inserted_id})
 
-
 def verify_user_password(username: str, password: str) -> bool:
     return authenticate_user(username, password) is not None
-
 
 def store_binary_upload(
     data: bytes,
@@ -59,6 +57,10 @@ def store_binary_upload(
     filename: str | None,
     content_type: str | None,
     request_id: str,
+    iv_for_data_base64: str | None = None,
+    algorithm_for_data: str | None = None,
+    encrypted_symmetric_key_base64: str | None = None,
+    algorithm_for_symmetric_key: str | None = None,
 ) -> str:
     object_id = fs.put(
         data,
@@ -70,10 +72,13 @@ def store_binary_upload(
             "is_read": 0,
             "created_at": datetime.now(timezone.utc),
             "request_id": request_id,
+            "iv_for_data_base64": iv_for_data_base64,
+            "algorithm_for_data": algorithm_for_data,
+            "encrypted_symmetric_key_base64": encrypted_symmetric_key_base64,
+            "algorithm_for_symmetric_key": algorithm_for_symmetric_key,
         },
     )
     return str(object_id)
-
 
 def list_binary_uploads(
     user_id: str | None = None,
@@ -115,7 +120,6 @@ def list_binary_uploads(
 
     return files
 
-
 def fetch_binary_upload(user_id: str, file_id: str) -> dict | None:
     try:
         object_id = ObjectId(file_id)
@@ -124,7 +128,7 @@ def fetch_binary_upload(user_id: str, file_id: str) -> dict | None:
 
     try:
         grid_out = fs.get(object_id)
-    except gridfs.errors.NoFile:
+    except NoFile:
         return None
 
     metadata = grid_out.metadata or {}
@@ -149,8 +153,11 @@ def fetch_binary_upload(user_id: str, file_id: str) -> dict | None:
         "file_id": str(grid_out._id),
         "filename": grid_out.filename,
         "content_type": getattr(grid_out, "content_type", None) or "application/octet-stream",
+        "iv_for_data_base64": metadata.get("iv_for_data_base64"),
+        "algorithm_for_data": metadata.get("algorithm_for_data"),
+        "encrypted_symmetric_key_base64": metadata.get("encrypted_symmetric_key_base64"),
+        "algorithm_for_symmetric_key": metadata.get("algorithm_for_symmetric_key"),
     }
-
 
 def mark_binary_upload_as_read(file_id: str, user_id: str, is_read: int) -> dict:
     try:
@@ -209,7 +216,6 @@ def store_user_key_material(
     )
     return result.matched_count == 1
 
-
 def fetch_user_key_material(user_id: str) -> dict | None:
     try:
         object_id = ObjectId(user_id)
@@ -242,7 +248,6 @@ def fetch_user_key_material(user_id: str) -> dict | None:
 
     return result
 
-# These are my changes
 def list_users() -> list[dict]:
     userList = []
     for user in users.find():
