@@ -6,44 +6,46 @@ Prerequisites
 
 Setup
 
-1. Create and activate a virtual environment:
-
-  python3 -m venv .venv
-  source .venv/bin/activate
-
-2. Install dependencies:
-
-  pip install -r requirements.txt
-
-3. Copy example env file and edit if needed:
+1. Copy the example env file and set your local values:
 
   cp .env.local.example .env.local
 
-  Important env variables (set in `.env.local`):
+2. Start MongoDB in Docker:
+
+  docker compose up -d mongodb
+
+   The service uses the credentials from `.env.local` and stores data in a named volume.
+
+3. Create and activate a virtual environment, then install dependencies from `requirements.txt`:
+
+  python3 -m venv .venv
+  source .venv/bin/activate
+  pip install -r requirements.txt
+
+   Important env variables (set in `.env.local`):
   - `MONGO_INITDB_ROOT_USERNAME`
   - `MONGO_INITDB_ROOT_PASSWORD`
   - `CORS_ALLOW_ORIGINS` (comma-separated origins, e.g. http://localhost:3000)
   - `JWT_EXPIRES_MINUTES`
-  - `JWT_SECRET_KEY`
+  - `JWT_SECRET`
   - `MONGODB_URI` (default: mongodb://admin:password@localhost:27017/?authSource=admin)
   - `MONGODB_WITH_CRED_URI` (used by `create_user.py`)
 
-Creating initial users
-
-Use the provided script to create test users:
+4. Create a test user:
 
   python3 create_user.py alice alicepassword
-  python3 create_user.py bob bobpassword
 
-Running MongoDB with Docker
+5. Run the API:
 
-Start MongoDB in Docker:
+  uvicorn server:app --reload --port 9001
 
-  docker compose up -d mongodb
+6. Open the API docs and try a login or upload flow:
 
-The service uses the credentials from `.env.local` and stores data in a named volume.
+  http://localhost:9001/docs
 
-Check the logs if it does not start cleanly:
+If you want live feedback while iterating, keep `docker compose logs -f mongodb` open in one terminal and let Uvicorn auto-reload in another.
+
+MongoDB troubleshooting:
 
   docker compose logs -f mongodb
 
@@ -96,8 +98,3 @@ Cleaning test data (examples)
 
   db.users.deleteMany({})
   db.fs.files.deleteMany({})
-
-Next steps
-
-- Commit this updated README or convert it to `README.md` for GitHub rendering.
-- Want me to make that change and create a commit?
