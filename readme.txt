@@ -1,6 +1,12 @@
 python3 -m venv myenv
 source myenv/bin/activate
 
+python3 -m venv .venv
+source .venv/bin/activate
+
+git config --global user.name "khoado1"
+git config --global user.email "khoa_do@yahoo.com" 
+
 cp .env.local.example .env.local
 
 pip install -r requirements.txt
@@ -17,6 +23,10 @@ mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logp
 uvicorn server:app --reload --port 9001
 
 
+--binary upload endpoint
+POST /binary-files
+
+
 python3 client.py \
   --base-url http://localhost:9001 \
   --username user1 \
@@ -26,8 +36,7 @@ python3 client.py \
   --content-type application/octet-stream
 
 
---install mongodb driver for python projects
-pip install pymongo
+pip install -r requirements.txt
 
 
 --install mongodb
@@ -50,6 +59,7 @@ mongod --auth --bind_ip 127.0.0.1 --dbpath "$(brew --prefix)/var/mongodb" --logp
 
 --password: password
 mongosh -u admin -p --authenticationDatabase admin
+password: password
 
 use app_data
 db.users.find().pretty()
@@ -57,5 +67,21 @@ db.users.find().pretty()
 use app_data
 db.fs.files.find().pretty()
 
+db.users.deleteMany({})
+db.fs.files.deleteMany({})
+
 --Swagger documentation
 http://localhost:9001/docs
+
+CORS Issue
+Yes. CORS_ALLOW_ORIGINS is read from the environment, not as a Python constant.
+
+Add a URL in either of these ways:
+
+Option 1: .env.local
+Create or edit:
+CORS_ALLOW_ORIGINS=http://localhost:3000
+JWT_EXPIRES_MINUTES=60
+JWT_SECRET_KEY=supersecretkey
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=cpsc454
