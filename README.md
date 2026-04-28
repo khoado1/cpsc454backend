@@ -2,7 +2,7 @@ CPSC 454 Backend — Quick Start
 
 Prerequisites
 - Python 3.10+ and virtualenv
-- MongoDB running locally (default: localhost:27017)
+- Docker and Docker Compose for MongoDB, or a local MongoDB instance on localhost:27017
 
 Setup
 
@@ -20,11 +20,13 @@ Setup
   cp .env.local.example .env.local
 
   Important env variables (set in `.env.local`):
+  - `MONGO_INITDB_ROOT_USERNAME`
+  - `MONGO_INITDB_ROOT_PASSWORD`
   - `CORS_ALLOW_ORIGINS` (comma-separated origins, e.g. http://localhost:3000)
   - `JWT_EXPIRES_MINUTES`
   - `JWT_SECRET_KEY`
-  - `MONGODB_URI` (default: mongodb://localhost:27017)
-  - `MONGODB_DB_NAME` (default: cpsc454)
+  - `MONGODB_URI` (default: mongodb://admin:password@localhost:27017/?authSource=admin)
+  - `MONGODB_WITH_CRED_URI` (used by `create_user.py`)
 
 Creating initial users
 
@@ -33,22 +35,25 @@ Use the provided script to create test users:
   python3 create_user.py alice alicepassword
   python3 create_user.py bob bobpassword
 
-Running MongoDB (macOS Homebrew notes)
+Running MongoDB with Docker
 
-Install (macOS/Homebrew):
+Start MongoDB in Docker:
 
-  brew tap mongodb/brew
-  brew install mongodb-community
+  docker compose up -d mongodb
 
-Start the service:
+The service uses the credentials from `.env.local` and stores data in a named volume.
 
-  brew services start mongodb/brew/mongodb-community
+Check the logs if it does not start cleanly:
 
-If you need elevated permissions:
+  docker compose logs -f mongodb
 
-  sudo brew services start mongodb/brew/mongodb-community
+Verify the database is reachable with `mongosh`:
 
-Verify connection with `mongosh`.
+  mongosh -u admin -p password --authenticationDatabase admin
+
+To stop MongoDB and remove its data volume:
+
+  docker compose down -v
 
 Run the server
 
@@ -85,7 +90,7 @@ From `mongosh`:
 Troubleshooting
 
 - CORS: `CORS_ALLOW_ORIGINS` is read from environment; add your frontend origin to `.env.local`.
-- If you get auth/access issues with MongoDB, ensure the server is started with authentication as appropriate and that credentials in `.env.local` match.
+- If you get auth/access issues with MongoDB, ensure the Docker container is running and that the credentials in `.env.local` match the container's root credentials.
 
 Cleaning test data (examples)
 
