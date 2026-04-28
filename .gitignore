@@ -1,8 +1,40 @@
 .venv/
+venv/
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
-__pycache__
+*.pyd
 
+# Virtual environment and packaging
+pip-wheel-metadata/
+*.egg-info/
+
+# Distribution / build
+build/
+dist/
+
+# Test and coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Caches
+.mypy_cache/
+.cache/
+.pyright/
+
+# Editor directories and files
+.vscode/
+.idea/
 .DS_Store
+
+# Environment files
+.env
 .env.local
+
+# Logs and local DB files
+*.log
+*.sqlite3
+instance/
