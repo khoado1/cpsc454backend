@@ -78,6 +78,15 @@ app.add_middleware(
     ],
 )
 
+# Health check endpoint for load balancers
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for GCP load balancer."""
+    return {
+        "status": "healthy",
+        "service": "backend"
+    }
+
 @app.post("/register")
 async def register(request: RegisterRequest):
     user = create_user(request.username, request.password)
