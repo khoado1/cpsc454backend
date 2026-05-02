@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {
         "uri": "mongodb://localhost:27017/",
     },
     "cors": {
-        "allow_origins": ["http://localhost:3000", "http://localhost:5173"],
+        "allow_origins": ["https://voxguard-866c2.web.app/", "http://localhost:3000", "http://localhost:5173"],
     },
 }
 

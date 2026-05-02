@@ -4,6 +4,7 @@
   },
   "cors": {
     "allow_origins": [
+      "https://voxguard-866c2.web.app/",
       "http://localhost:3000",
       "http://localhost:5173"
     ]
